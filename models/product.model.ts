@@ -20,6 +20,7 @@ interface IProduct extends Document {
   ImageLink?: string;
   Alt?: string;
   thumbnail: object;
+  price: number;
   Family?: string;
   Years?: string;
   Frames?: string;
@@ -28,6 +29,7 @@ interface IProduct extends Document {
   TypesDiv?: string;
   TextsDiv?: string;
   ListOfHrefs?: IListOfHrefs[];
+  purchased?: number;
 }
 
 //! ---------------   schema for the products
@@ -47,27 +49,38 @@ const listOfHrefsSchema = new Schema<IListOfHrefs>({
 });
 
 // ~ products Schema
-const productsSchema = new Schema<IProduct>({
-  ParentTitle: String,
-  ImageLink: String,
-  Alt: String,
-  thumbnail: {
-    public_id: {
-      type: String,
+const productsSchema = new Schema<IProduct>(
+  {
+    ParentTitle: String,
+    ImageLink: String,
+    Alt: String,
+    thumbnail: {
+      public_id: {
+        type: String,
+      },
+      url: {
+        type: String,
+      },
     },
-    url: {
-      type: String,
+    price: {
+      type: Number,
+      default: 0,
+    },
+    Family: String,
+    Years: String,
+    Frames: String,
+    Generation: String,
+    BreadcrumbsH1: String,
+    TypesDiv: String,
+    TextsDiv: String,
+    ListOfHrefs: [listOfHrefsSchema],
+    purchased: {
+      type: Number,
+      default: 0,
     },
   },
-  Family: String,
-  Years: String,
-  Frames: String,
-  Generation: String,
-  BreadcrumbsH1: String,
-  TypesDiv: String,
-  TextsDiv: String,
-  ListOfHrefs: [listOfHrefsSchema],
-});
+  { timestamps: true }
+);
 
 const ProductModel: Model<IProduct> = mongoose.model("Product", productsSchema);
 
