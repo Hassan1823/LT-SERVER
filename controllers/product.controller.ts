@@ -121,7 +121,7 @@ export const getAllProducts = CatchAsyncError(
           products,
         });
       } else {
-        const products = await ProductModel.find();
+        const products = await ProductModel.find().sort({ createdAt: -1 });
 
         await redis.set("allProducts", JSON.stringify(products));
 
@@ -205,6 +205,176 @@ export const deleteProduct = CatchAsyncError(
           success: true,
           message: `✅ ${product.ParentTitle} Deleted Successfully`,
         });
+      }
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+
+// ~ find products by Main Category like Toyota
+// Define interface for ProductModel
+interface Product extends Document {
+  ParentTitle: string;
+  _doc: any;
+  type: string;
+}
+
+// Update the function signature and add type for the error
+export const getProductsByTypes = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const { type } = req.body;
+
+    try {
+      let productNames: Product[] = await ProductModel.find();
+
+      if (type !== "") {
+        productNames = productNames.filter((product: Product) =>
+          product.ParentTitle.trimStart().startsWith(type.trim())
+        );
+      } else {
+        return next(new ErrorHandler("🚀 No Type Selected", 404));
+      }
+
+      if (productNames.length === 0) {
+        return next(new ErrorHandler("🚀 No Product Found", 404));
+      }
+
+      productNames = productNames.slice(0, 15);
+
+      res.status(200).json({
+        success: true,
+        productNames: productNames,
+      });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+
+// ~ get the product by search of Frames
+interface ISearchFrames {
+  frames: string;
+}
+
+export const getProductsByFrames = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { frames } = req.body as ISearchFrames;
+      const productFrames = frames?.trim().toUpperCase();
+
+      const products = await ProductModel.find();
+
+      if (products) {
+        const resultProduct = products.filter((product) => {
+          const productFrame = product.Frames?.trim();
+          const splitFrame = productFrame?.split(",");
+          // console.log(`Split Frames : ${splitFrame}`);
+          const result = splitFrame?.find((item) => {
+            return item.trim() === productFrames;
+            // console.log(`Item is : ${item}`);
+          });
+
+          // console.log(`Result : ${result}`);
+          return result;
+        });
+
+        if (resultProduct.length !== 0) {
+          res.status(200).json({
+            success: true,
+            resultProduct,
+          });
+        } else {
+          return next(new ErrorHandler(`⚠️ No Match Found`, 404));
+        }
+      }
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+
+// ~ get the product by search of Frames Family and hrefNumbers
+interface ISearchFamily {
+  family: string;
+}
+
+export const getProductsByFamily = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { family } = req.body as ISearchFamily;
+
+      const products = await ProductModel.find();
+      const productFamily = `(` + family.trim() + `)`;
+
+      if (products) {
+        const resultProduct = products.filter((item) => {
+          // console.log(`Item : ${item.Family?.trim()}`);
+          return item.Family?.trim() === productFamily.toUpperCase();
+        });
+        if (resultProduct.length !== 0) {
+          res.status(200).json({
+            success: true,
+            resultProduct,
+          });
+        } else {
+          return next(new ErrorHandler(`⚠️ No Match Found`, 404));
+        }
+      }
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+
+// ~ search products by hrefNumbers
+
+interface ISearchHrefNames {
+  href_number: any;
+}
+export const getProductsByHrefNumber = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { href_number } = req.body as ISearchHrefNames;
+
+      const products = await ProductModel.find();
+      if (products) {
+        const resultProducts = products.filter((product) => {
+          const listOfHref = product.ListOfHrefs;
+
+          const cards = listOfHref?.filter((listOfHref) => {
+            const cardsList = listOfHref.cards;
+
+            const hrefNumberList = cardsList?.filter((href) => {
+              const hrefNumbers = href.hrefNumbers;
+
+              // Corrected filter function to return a boolean
+              const productHrefList = hrefNumbers?.filter(
+                (item) => item === href_number.trim()
+              );
+              if (productHrefList?.length !== 0) {
+                return productHrefList; // Return true if the item is found
+              }
+            });
+            if (hrefNumberList?.length !== 0) {
+              return hrefNumberList; // Return true if the item is found
+            }
+          });
+          if (cards?.length !== 0) {
+            return cards; // Return true if the item is found
+          }
+        });
+
+        if (resultProducts.length !== 0) {
+          res.status(200).json({
+            success: true,
+            resultProducts,
+          });
+        } else {
+          return next(new ErrorHandler(`⚠️ No Products Available`, 400));
+        }
+      } else {
+        return next(new ErrorHandler(`⚠️ No Products Available`, 400));
       }
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));

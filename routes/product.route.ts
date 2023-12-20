@@ -7,8 +7,12 @@ import {
   getAllProducts,
   getAllUsers,
   getProductByUser,
+  getProductsByFamily,
+  getProductsByFrames,
+  getProductsByHrefNumber,
+  getProductsByTypes,
   getSingleProduct,
-  uploadProduct,
+  uploadProduct
 } from "../controllers/product.controller";
 import { authorizeRoles, isAuthenticated } from "../middleware/auth";
 
@@ -45,6 +49,27 @@ productRoute.delete(
   isAuthenticated,
   authorizeRoles("admin"),
   deleteProduct
+);
+
+productRoute.get(
+  "/products-by-type",
+  getProductsByTypes
+);
+
+
+productRoute.get(
+  "/products-by-frames",
+  getProductsByFrames
+);
+
+productRoute.get(
+  "/products-by-family",
+  getProductsByFamily
+);
+
+productRoute.get(
+  "/products-by-hrefNumber",
+  getProductsByHrefNumber
 );
 
 export default productRoute;
