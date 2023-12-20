@@ -145,6 +145,7 @@ export const activateUser = CatchAsyncError(
         name,
         email,
         password,
+        isVerified: true,
       });
 
       res.status(201).json({
@@ -455,7 +456,7 @@ export const updateUserRole = CatchAsyncError(
     try {
       const { id, role } = req.body;
 
-      updateUserRoleService(res, id, role);
+      updateUserRoleService(res, next, id, role);
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));
     }

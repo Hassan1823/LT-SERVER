@@ -1,8 +1,9 @@
 // ! all find of services related to the user
 
-import { Response } from "express";
+import { NextFunction, Response } from "express";
 import { redis } from "../utils/redis";
 import userModel from "../models/user.model";
+import ErrorHandler from "../utils/ErrorHandler";
 
 // ! get user by ID
 export const getUserById = async (id: string, res: Response) => {
@@ -28,13 +29,22 @@ export const getAllUserService = async (res: Response) => {
 // ~ update user role
 export const updateUserRoleService = async (
   res: Response,
+  next: NextFunction,
   id: string,
   role: string
 ) => {
-  const user = await userModel.findByIdAndUpdate(id, { role }, { new: true });
-
-  res.status(201).json({
-    success: true,
-    user,
-  });
+  const user = await userModel.findById(id);
+  if (!user) {
+    return next(new ErrorHandler(`⚠️ User Not Found`, 404));
+  } else {
+    const newUser = await userModel.findByIdAndUpdate(
+      id,
+      { role },
+      { new: true }
+    );
+    res.status(201).json({
+      success: true,
+      newUser,
+    });
+  }
 };

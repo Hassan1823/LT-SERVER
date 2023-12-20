@@ -6,6 +6,9 @@ interface ICards extends Document {
   ImageLink?: string;
   Alt?: string;
   hrefH1?: string;
+  hrefNumbers?: [string];
+  hrefNames?: [string];
+  hrefPrices?: [string];
 }
 
 // ~ listofhrefs interface
@@ -36,10 +39,33 @@ interface IProduct extends Document {
 
 // ~ card schema
 const cardSchema = new Schema<ICards>({
-  Href: String,
-  ImageLink: String,
-  Alt: String,
-  hrefH1: String,
+  Href: {
+    type: String,
+  },
+  ImageLink: {
+    type: String,
+  },
+  Alt: {
+    type: String,
+  },
+  hrefH1: {
+    type: String,
+  },
+  hrefNumbers: [
+    {
+      type: String,
+    },
+  ],
+  hrefNames: [
+    {
+      type: String,
+    },
+  ],
+  hrefPrices: [
+    {
+      type: String,
+    },
+  ],
 });
 
 // ~ ListOfHrefs Schema
