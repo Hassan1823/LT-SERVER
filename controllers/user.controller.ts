@@ -15,7 +15,11 @@ import {
   sendToken,
 } from "../utils/jwt";
 import { redis } from "../utils/redis";
-import { getUserById } from "../services/user.service";
+import {
+  getAllUserService,
+  getUserById,
+  updateUserRoleService,
+} from "../services/user.service";
 import cloudinary from "cloudinary";
 
 // !register user
@@ -145,7 +149,7 @@ export const activateUser = CatchAsyncError(
 
       res.status(201).json({
         success: true,
-        message:`🚀 User Registered Successfully`
+        message: `🚀 User Registered Successfully`,
       });
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));
@@ -428,6 +432,57 @@ export const updateProfilePicture = CatchAsyncError(
         success: true,
         user,
       });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+
+// ~ get all users --- only for admin
+export const getAllUsers = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      getAllUserService(res);
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+
+// ~ update user role ---only for admin
+export const updateUserRole = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id, role } = req.body;
+
+      updateUserRoleService(res, id, role);
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+
+// ~ delete user ---only for admin
+export const deleteUser = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+
+      const user = await userModel.findById(id);
+
+      if (!user) {
+        return next(new ErrorHandler(`⚠️ User Not Found`, 404));
+      } else {
+        await user.deleteOne({ id });
+
+        // ! delete user from redis also
+        await redis.del(id);
+
+        res.status(200).json({
+          success: true,
+          message: `🚀 ${user.name} Your Account Is Deleted Successfully`,
+        });
+      }
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));
     }

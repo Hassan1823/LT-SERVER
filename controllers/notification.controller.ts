@@ -68,5 +68,5 @@ cron.schedule("0 0 0 * * *", async () => {
     status: "read",
     createdAt: { $lt: thirtyDaysAgo },
   });
-  console.log(`🚀 deleting Read Notifications`);
+  console.log(`🚀 Deleting Read Notifications`);
 });

@@ -12,3 +12,14 @@ export const createProduct = CatchAsyncError(
     });
   }
 );
+
+
+
+// ~ get all products
+export const getAllProductsService = async (res: Response) => {
+  const products = await ProductModel.find().sort({ createdAt: 1 });
+  res.status(201).json({
+    success: true,
+    products,
+  });
+};

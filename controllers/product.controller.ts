@@ -3,7 +3,10 @@ import { NextFunction, Request, Response } from "express";
 
 // ~ local imports
 import { CatchAsyncError } from "../middleware/catchAsyncErrors";
-import { createProduct } from "../services/product.service";
+import {
+  createProduct,
+  getAllProductsService,
+} from "../services/product.service";
 import ErrorHandler from "../utils/ErrorHandler";
 import ProductModel from "../models/product.model";
 import { redis } from "../utils/redis";
@@ -158,7 +161,7 @@ export const getProductByUser = CatchAsyncError(
       const product = await ProductModel.findById(productId);
 
       if (product) {
-      //   console.log(`Produts : ${product}`);
+        //   console.log(`Produts : ${product}`);
         res.status(200).json({
           success: true,
           product,
@@ -168,6 +171,43 @@ export const getProductByUser = CatchAsyncError(
       }
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 500));
+    }
+  }
+);
+
+// ~ get all products --- only for admin
+export const getAllUsers = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      getAllProductsService(res);
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+
+// ~ delete product ---only for admin
+export const deleteProduct = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+
+      const product = await ProductModel.findById(id);
+
+      if (!product) {
+        return next(new ErrorHandler(`⚠️ Product Not Found`, 404));
+      } else {
+        await product.deleteOne({ id });
+
+        await redis.del(id);
+
+        res.status(200).json({
+          success: true,
+          message: `✅ ${product.ParentTitle} Deleted Successfully`,
+        });
+      }
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
     }
   }
 );
