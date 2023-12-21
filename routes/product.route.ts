@@ -10,6 +10,7 @@ import {
   getProductsByFamily,
   getProductsByFrames,
   getProductsByHrefNumber,
+  getProductsBySubCategory,
   getProductsByTypes,
   getSingleProduct,
   uploadProduct
@@ -70,6 +71,11 @@ productRoute.get(
 productRoute.get(
   "/products-by-hrefNumber",
   getProductsByHrefNumber
+);
+
+productRoute.get(
+  "/products-by-sub",
+  getProductsBySubCategory
 );
 
 export default productRoute;

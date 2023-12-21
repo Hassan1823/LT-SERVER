@@ -23,3 +23,5 @@ export const getAllProductsService = async (res: Response) => {
     products,
   });
 };
+
+
