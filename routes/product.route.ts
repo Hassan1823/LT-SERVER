@@ -7,6 +7,7 @@ import {
   getAllProducts,
   getAllUsers,
   getProductByUser,
+  getProductCard,
   getProductsByFamily,
   getProductsByFrames,
   getProductsByHrefNumber,
@@ -76,6 +77,11 @@ productRoute.get(
 productRoute.get(
   "/products-by-sub",
   getProductsBySubCategory
+);
+
+productRoute.get(
+  "/product-card",
+  getProductCard
 );
 
 export default productRoute;

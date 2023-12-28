@@ -452,3 +452,45 @@ export const getProductsBySubCategory = CatchAsyncError(
     }
   }
 );
+
+// ~ product by product Id and Card ID
+interface IproductCard {
+  productId: string;
+  payment_info: string;
+}
+export const getProductCard = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { payment_info, productId } = req.body as IproductCard;
+      
+      let product: any = await ProductModel.findOne({
+        _id: productId,
+        "ListOfHrefs.H1Tag": payment_info,
+      });
+
+      const ListOfHref = product.ListOfHrefs;
+
+      const result = ListOfHref.find((item: any) => {
+        const resultItem =
+          item.H1Tag.trim().toUpperCase() === payment_info.trim().toUpperCase();
+        console.log(`Item : ${resultItem}`);
+        return resultItem;
+      });
+
+      if (!product) {
+        return next(new ErrorHandler(`⚠️ Product Not Found`, 404));
+      } else {
+        // const cardList = product.some((item: any) => {
+        //   const listHref = item.ListOfHrefs;
+        //   console.log(`🚀 ${listHref}`);
+        // });
+        res.status(200).json({
+          success: true,
+          result,
+        });
+      }
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);

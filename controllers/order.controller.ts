@@ -4,36 +4,53 @@ import path from "path";
 
 // ~local imports
 import { CatchAsyncError } from "../middleware/catchAsyncErrors";
-import ErrorHandler from "../utils/ErrorHandler";
-import OrderModel, { IOrder } from "../models/order.model";
-import userModel from "../models/user.model";
-import ProductModel from "../models/product.model";
-import CourseModel from "../models/course.model";
-import sendMail from "../utils/sendMails";
 import NotificationModel from "../models/notification.model";
+import { IOrder } from "../models/order.model";
+import ProductModel from "../models/product.model";
+import userModel from "../models/user.model";
 import { getAllOrdersService, newOrder } from "../services/order.service";
+import ErrorHandler from "../utils/ErrorHandler";
+import sendMail from "../utils/sendMails";
 
 // ~create order
 export const createOrder = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { productId, payment_info } = req.body as IOrder;
+      const {
+        productId,
+        payment_info,
+        card_id,
+        hrefNumbers,
+        hrefNames,
+        hrefPrices,
+      } = req.body as IOrder;
       const user = await userModel.findById(req.user?._id);
 
       const productExistInUser = user?.products.some(
         (product: any) => product._id.toString() === productId
+        // product.ListOfHrefs._id === payment_info
       );
 
       if (productExistInUser) {
-        return next(new ErrorHandler(`🚀 Course Is Already Purchased`, 400));
+        return next(new ErrorHandler(`🚀 Product Is Already Purchased`, 400));
       }
 
       const product = await ProductModel.findById(productId);
 
       if (!product) {
-        return next(new ErrorHandler(`🥲 Course Not Found`, 400));
+        return next(new ErrorHandler(`🥲 Product Not Found`, 400));
       }
 
+      const ListOfHref = product.ListOfHrefs;
+
+      const result = ListOfHref?.find((item: any) => {
+        const resultItem =
+          item.H1Tag.trim().toUpperCase() === payment_info.trim().toUpperCase();
+        console.log(`Item : ${resultItem}`);
+        return resultItem;
+      });
+
+      console.log(`🤙 Result : ${result}`);
       const data: any = {
         productId: product._id,
         userId: user?._id,
