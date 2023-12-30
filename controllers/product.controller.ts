@@ -401,15 +401,20 @@ export const getProductsByHrefNumber = CatchAsyncError(
 interface Product extends Document {
   ParentTitle: string;
   _doc: any;
-  sub_category: string;
-  type: string;
+  // sub_category: string;
+  // type: string;
 }
 
 export const getProductsBySubCategory = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { sub_category, type } = req.body as Product;
-      const mainCategory = type.trim().toUpperCase();
+      const subType = req.params.id
+      const types = subType.split(" ")
+      const second_category = types[1]+" "+types[2]
+      console.log(second_category)
+      // const { sub_category, type } = req.body as Product;
+
+      const mainCategory = types[0].trim().toUpperCase();
       let products: any = [];
       let productNames: any = [];
       const isCacheExist = await redis.get(mainCategory);
@@ -426,14 +431,14 @@ export const getProductsBySubCategory = CatchAsyncError(
       }
       productNames = products;
 
-      if (sub_category !== "") {
+      if (second_category !== "") {
         productNames = productNames.filter((product: Product) => {
           const title = product.ParentTitle;
           const trim = title.trim();
           const splitTitle = trim.split(" ");
-          const splitItem = splitTitle[1];
-          // console.log(`Sub Category is : ${splitItem}`);
-          return splitItem.toUpperCase() === sub_category.trim().toUpperCase();
+          const splitItem = splitTitle[1]+" "+splitTitle[2];
+          console.log(`Trim : ${splitItem}`);
+          return splitItem.toUpperCase() === second_category.toUpperCase();
         });
       } else {
         return next(new ErrorHandler("🚀 No Type Selected", 404));

@@ -75,7 +75,7 @@ productRoute.get(
 );
 
 productRoute.get(
-  "/products-by-sub",
+  "/products-by-sub/:id",
   getProductsBySubCategory
 );
 
