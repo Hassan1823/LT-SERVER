@@ -9,7 +9,7 @@ import {
   getAllProductsService,
 } from "../services/product.service";
 import ErrorHandler from "../utils/ErrorHandler";
-import { redis } from "../utils/redis";
+// import { redis } from "../utils/redis";
 
 // ! ----------- functions
 
@@ -83,24 +83,24 @@ export const getSingleProduct = CatchAsyncError(
     try {
       const productId = req.params.id;
 
-      const isCachedExist = await redis.get(productId);
+      // const isCachedExist = await redis.get(productId);
 
-      if (isCachedExist) {
-        const product = JSON.parse(isCachedExist);
-        res.status(200).json({
-          success: true,
-          product,
-        });
-      } else {
-        const product = await ProductModel.findById(req.params.id);
-        await redis.set(productId, JSON.stringify(product));
-        await redis.del("allProducts");
+      // if (isCachedExist) {
+      //   const product = JSON.parse(isCachedExist);
+      //   res.status(200).json({
+      //     success: true,
+      //     product,
+      //   });
+      // } else {
+      const product = await ProductModel.findById(productId);
+      // await redis.set(productId, JSON.stringify(product));
+      // await redis.del("allProducts");
 
-        res.status(200).json({
-          success: true,
-          product,
-        });
-      }
+      res.status(200).json({
+        success: true,
+        product,
+      });
+      // }
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 500));
     }
@@ -111,28 +111,27 @@ export const getSingleProduct = CatchAsyncError(
 export const getAllProducts = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const isCatcheExist = await redis.get("allProducts");
+      // const isCatcheExist = await redis.get("allProducts");
 
-      if (isCatcheExist) {
-        const products = JSON.parse(isCatcheExist);
-        //   console.log(`🚀 Hitting Redis`)
+      // if (isCatcheExist) {
+      //   const products = JSON.parse(isCatcheExist);
+      //   //   console.log(`🚀 Hitting Redis`)
 
-        res.status(200).json({
-          success: true,
-          products,
-        });
-      } else {
-        let products = await ProductModel.find().sort({ createdAt: -1 });
-        products = products.slice(0, 15);
+      //   res.status(200).json({
+      //     success: true,
+      //     products,
+      //   });
+      // } else {
+      let products = await ProductModel.find().sort({ createdAt: -1 });
 
-        await redis.set("allProducts", JSON.stringify(products));
+      // await redis.set("allProducts", JSON.stringify(products));
 
-        // console.log(`🚀 Hitting MongoDB`)
-        res.status(200).json({
-          success: true,
-          products,
-        });
-      }
+      // console.log(`🚀 Hitting MongoDB`)
+      res.status(200).json({
+        success: true,
+        products,
+      });
+      // }
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 500));
     }
@@ -201,7 +200,7 @@ export const deleteProduct = CatchAsyncError(
       } else {
         await product.deleteOne({ id });
 
-        await redis.del(id);
+        // await redis.del(id);
 
         res.status(200).json({
           success: true,
@@ -225,26 +224,24 @@ interface Product extends Document {
 export const getProductsByTypes = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { type } = req.body as Product;
-    const typeTrim = type.trim().toUpperCase();
+    const typeTrim = (type || "").trim().toUpperCase();
 
     try {
       let productNames: Product[] = [];
       let product: any = [];
-      const isCacheExist = await redis.get(typeTrim);
-      if (isCacheExist) {
-        product = JSON.parse(isCacheExist);
-        // console.log("🚀 Hitting Redis");
-      } else {
-        product = await ProductModel.find();
-        // console.log("🚀 Hitting MongoDB");
-      }
+
+      product = await ProductModel.find();
 
       productNames = product;
 
       if (type !== "") {
-        productNames = productNames.filter((product: Product) =>
-          product.ParentTitle.toUpperCase().trimStart().startsWith(typeTrim)
-        );
+        productNames = productNames.filter((product: Product) => {
+          const parentTitle = product.ParentTitle;
+          if (parentTitle) {
+            return parentTitle.trim().toUpperCase().startsWith(typeTrim);
+          }
+          return false;
+        });
       } else {
         return next(new ErrorHandler("🚀 No Type Selected", 404));
       }
@@ -252,9 +249,6 @@ export const getProductsByTypes = CatchAsyncError(
       if (productNames.length === 0) {
         return next(new ErrorHandler("🚀 No Product Found", 404));
       }
-
-      // productNames = productNames.slice(0, 15);
-      await redis.set(typeTrim, JSON.stringify(productNames));
 
       res.status(200).json({
         success: true,
@@ -401,6 +395,7 @@ export const getProductsByHrefNumber = CatchAsyncError(
 interface Product extends Document {
   ParentTitle: string;
   _doc: any;
+  BreadcrumbsH1: string;
   // sub_category: string;
   // type: string;
 }
@@ -408,35 +403,44 @@ interface Product extends Document {
 export const getProductsBySubCategory = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const subType = req.params.id
-      const types = subType.split(" ")
-      const second_category = types[1]+" "+types[2]
-      console.log(second_category)
+      const subType = req.params.id;
+      const types = subType.split(" ");
+      const second_category = types[1];
+      // console.log(types);
       // const { sub_category, type } = req.body as Product;
 
-      const mainCategory = types[0].trim().toUpperCase();
+      const mainCategory = types[0].trim();
+      console.log(`Main Category : ${mainCategory}`);
+      console.log(`Sub Category : ${second_category}`);
       let products: any = [];
       let productNames: any = [];
-      const isCacheExist = await redis.get(mainCategory);
-      if (isCacheExist) {
-        products = JSON.parse(isCacheExist);
-        console.log(`🚀 Hitting Redis`);
-      } else {
-        products = await ProductModel.find();
-        products = products.filter((product: Product) =>
-          product.ParentTitle.toUpperCase().trimStart().startsWith(mainCategory)
-        );
-        await redis.set(mainCategory, JSON.stringify(products));
-        console.log(`🚀 Hitting MONGODB`);
-      }
+
+      // const isCacheExist = await redis.get(mainCategory);
+      // if (isCacheExist) {
+      //   products = JSON.parse(isCacheExist);
+      //   console.log(`🚀 Hitting Redis`);
+      // } else {
+      products = await ProductModel.find();
+
+      products = products.filter((product: Product) => {
+        let productTitle = product.BreadcrumbsH1.trim();
+        let productTitleArray = productTitle.split(" ");
+        productTitle = productTitleArray[0];
+        // console.log(productTitle);
+
+        return productTitle === mainCategory;
+      });
+      // await redis.set(mainCategory, JSON.stringify(products));
+      // }
       productNames = products;
+      // console.log(`🚀 ${productNames.BreadcrumbsH1 }`);
 
       if (second_category !== "") {
         productNames = productNames.filter((product: Product) => {
-          const title = product.ParentTitle;
-          const trim = title.trim();
-          const splitTitle = trim.split(" ");
-          const splitItem = splitTitle[1]+" "+splitTitle[2];
+          let title = product.BreadcrumbsH1.trim();
+          let titleArray = title.split(" ");
+          let splitItem = titleArray[1];
+
           console.log(`Trim : ${splitItem}`);
           return splitItem.toUpperCase() === second_category.toUpperCase();
         });
@@ -467,7 +471,7 @@ export const getProductCard = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { payment_info, productId } = req.body as IproductCard;
-      
+
       let product: any = await ProductModel.findOne({
         _id: productId,
         "ListOfHrefs.H1Tag": payment_info,
