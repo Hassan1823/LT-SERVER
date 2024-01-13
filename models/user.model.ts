@@ -16,7 +16,14 @@ export interface IUser extends Document {
   };
   role: string;
   isVerified: boolean;
-  products: Array<{ productId: string }>;
+  products: Array<{
+    productId: string;
+    cardObjectId: string;
+    hrefNumbers: string;
+    hrefNames: string;
+    hrefPrices: string;
+    orderConfirmed: boolean;
+  }>;
   comparePassword: (password: string) => Promise<boolean>;
   SignAccessToken: () => string;
   SignRefreshToken: () => string;
@@ -59,6 +66,11 @@ const userSchema: Schema<IUser> = new mongoose.Schema(
     products: [
       {
         productId: String,
+        cardObjectId: String,
+        hrefNumbers: String,
+        hrefNames: String,
+        hrefPrices: String,
+        orderConfirmed:Boolean
       },
     ],
   },

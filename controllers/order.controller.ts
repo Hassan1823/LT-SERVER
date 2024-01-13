@@ -23,17 +23,18 @@ export const createOrder = CatchAsyncError(
         hrefNumbers,
         hrefNames,
         hrefPrices,
+        
       } = req.body as IOrder;
       const user = await userModel.findById(req.user?._id);
 
-      const productExistInUser = user?.products.some(
-        (product: any) => product._id.toString() === productId
-        // product.ListOfHrefs._id === payment_info
-      );
+      // const productExistInUser = user?.products.map(
+      //   (product: any) => product._id.toString() === productId
+      //   // product.ListOfHrefs._id === payment_info
+      // );
 
-      if (productExistInUser) {
-        return next(new ErrorHandler(`🚀 Product Is Already Purchased`, 400));
-      }
+      // if (productExistInUser) {
+      //   return next(new ErrorHandler(`🚀 Product Is Already Purchased`, 400));
+      // }
 
       const product = await ProductModel.findById(productId);
 
@@ -50,18 +51,21 @@ export const createOrder = CatchAsyncError(
         return resultItem;
       });
 
-      console.log(`🤙 Result : ${result}`);
       const data: any = {
         productId: product._id,
         userId: user?._id,
-        payment_info,
+        payment_info: payment_info,
+        hrefNumbers: hrefNumbers,
+        hrefNames: hrefNames,
+        hrefPrices: hrefPrices,
       };
+      console.log(data);
 
       const mailData = {
         order: {
           _id: product._id.toString().slice(0, 6),
-          name: product.ParentTitle,
-          price: product.price,
+          name: hrefNames,
+          price: hrefPrices,
           date: new Date().toLocaleDateString("en-US", {
             year: "numeric",
             month: "long",
@@ -92,7 +96,14 @@ export const createOrder = CatchAsyncError(
         );
       }
 
-      user?.products.push(product?._id);
+      user?.products.push({
+        productId: product?._id,
+        cardObjectId: payment_info,
+        hrefNames,
+        hrefNumbers,
+        hrefPrices,
+        orderConfirmed: false,
+      });
 
       await user?.save();
 
@@ -102,11 +113,13 @@ export const createOrder = CatchAsyncError(
         message: `You Have A New Order from ${product?.ParentTitle}`,
       });
 
-      if (product.purchased) {
-        product.purchased += 1;
-      } else {
-        product.purchased = 1;
-      }
+      // if (user?.products?.orderConfirmed) {
+      //   if (product.purchased) {
+      //     product.purchased += 1;
+      //   } else {
+      //     product.purchased = 1;
+      //   }
+      // }
 
       await product.save();
 
