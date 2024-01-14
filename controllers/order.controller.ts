@@ -42,14 +42,14 @@ export const createOrder = CatchAsyncError(
         return next(new ErrorHandler(`🥲 Product Not Found`, 400));
       }
 
-      const ListOfHref = product.ListOfHrefs;
+      // const ListOfHref = product.ListOfHrefs;
 
-      const result = ListOfHref?.find((item: any) => {
-        const resultItem =
-          item.H1Tag.trim().toUpperCase() === payment_info.trim().toUpperCase();
-        console.log(`Item : ${resultItem}`);
-        return resultItem;
-      });
+      // const result = ListOfHref?.find((item: any) => {
+      //   const resultItem =
+      //     item.H1Tag.trim().toUpperCase() === payment_info.trim().toUpperCase();
+      //   console.log(`Item : ${resultItem}`);
+      //   return resultItem;
+      // });
 
       const data: any = {
         productId: product._id,
