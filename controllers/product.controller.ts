@@ -213,6 +213,48 @@ export const deleteProduct = CatchAsyncError(
   }
 );
 
+// ! products by main types starts here
+
+export const productsMainType = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { type } = req.params;
+      const typeTrim = (type || "").trim().toUpperCase();
+      let productNames: any = [];
+
+      console.log(`type is : `);
+      console.log(typeTrim);
+      let product: any = await ProductModel.find();
+      productNames = product;
+
+      if (type !== "") {
+        productNames = productNames.filter((product: any) => {
+          const productBreadcrumbsH1 = product.BreadcrumbsH1;
+          let BreadcrumbsH1 = productBreadcrumbsH1;
+          if (BreadcrumbsH1) {
+            return BreadcrumbsH1.trim().toUpperCase().startsWith(typeTrim);
+          }
+          return false;
+        });
+      } else {
+        return next(new ErrorHandler("🚀 No Type Selected", 404));
+      }
+
+      if (productNames.length === 0) {
+        return next(new ErrorHandler("🚀 No Product Found", 404));
+      }
+
+      res.status(200).json({
+        success: true,
+        products: productNames,
+      });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+// ! products by main types ends here
+
 // ~ find products by Main Category like Toyota
 // Define interface for ProductModel
 interface Product extends Document {
