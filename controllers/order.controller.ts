@@ -38,23 +38,23 @@ export const createProductOrder = CatchAsyncError(
           orderConfirmed: orderConfirmed,
         });
 
-        const data: any = {
-          productId: productId,
-          userId: userId,
-          hrefNumbers: hrefNumbers,
-          hrefNames: hrefNames,
-          hrefPrices: hrefPrices,
-        };
+        // const data: any = {
+        //   productId: productId,
+        //   userId: userId,
+        //   hrefNumbers: hrefNumbers,
+        //   hrefNames: hrefNames,
+        //   hrefPrices: hrefPrices,
+        // };
 
-        await NotificationModel.create({
-          user: user?._id,
-          title: "New Order",
-          message: `You Have A New Order for ${hrefNames}`,
-        });
+        // await NotificationModel.create({
+        //   user: user?._id,
+        //   title: "New Order",
+        //   message: `You Have A New Order for ${hrefNames}`,
+        // });
 
         await user.save();
 
-        newOrder(data, res, next);
+        // newOrder(data, res, next);
 
         res.status(200).json({
           success: true,
