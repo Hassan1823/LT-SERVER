@@ -5,8 +5,8 @@ import mongoose, { Model, Schema, Document } from "mongoose";
 export interface IOrder extends Document {
   productId: string;
   userId: string;
-  payment_info: string;
-  card_id: string;
+  // payment_info: string;
+  // card_id: string;
   hrefNumbers: string;
   hrefNames: string;
   hrefPrices: string;
@@ -23,14 +23,14 @@ const orderSchema = new Schema<IOrder>(
       type: String,
       required: true,
     },
-    payment_info: {
-      type: String,
-      //   required: true,
-      // listofHref id
-    },
-    card_id: {
-      types: String,
-    },
+    // payment_info: {
+    //   type: String,
+    //   //   required: true,
+    //   // listofHref id
+    // },
+    // card_id: {
+    //   types: String,
+    // },
     hrefNumbers: {
       types: String,
     },

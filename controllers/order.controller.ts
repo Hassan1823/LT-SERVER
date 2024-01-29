@@ -12,18 +12,72 @@ import { getAllOrdersService, newOrder } from "../services/order.service";
 import ErrorHandler from "../utils/ErrorHandler";
 import sendMail from "../utils/sendMails";
 
+// ! create product order
+
+interface cartItems {
+  productId: string;
+  hrefNumbers: string;
+  hrefNames: string;
+  hrefPrices: string;
+  orderConfirmed: boolean;
+}
+
+export const createProductOrder = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { productId, hrefNumbers, hrefNames, hrefPrices, orderConfirmed } =
+        req.body as cartItems;
+      const userId = req?.user?._id;
+      const user = await userModel.findById(userId);
+      if (user) {
+        user.products.push({
+          productId: productId,
+          hrefNumbers: hrefNumbers,
+          hrefNames: hrefNames,
+          hrefPrices: hrefPrices,
+          orderConfirmed: orderConfirmed,
+        });
+
+        const data: any = {
+          productId: productId,
+          userId: userId,
+          hrefNumbers: hrefNumbers,
+          hrefNames: hrefNames,
+          hrefPrices: hrefPrices,
+        };
+
+        await NotificationModel.create({
+          user: user?._id,
+          title: "New Order",
+          message: `You Have A New Order for ${hrefNames}`,
+        });
+
+        await user.save();
+
+        newOrder(data, res, next);
+
+        res.status(200).json({
+          success: true,
+          message: `${hrefNames} added to cart`,
+        });
+      }
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  }
+);
+
 // ~create order
 export const createOrder = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const {
         productId,
-        payment_info,
-        card_id,
+        // payment_info,
+        // card_id,
         hrefNumbers,
         hrefNames,
         hrefPrices,
-        
       } = req.body as IOrder;
       const user = await userModel.findById(req.user?._id);
 
@@ -54,7 +108,7 @@ export const createOrder = CatchAsyncError(
       const data: any = {
         productId: product._id,
         userId: user?._id,
-        payment_info: payment_info,
+        // payment_info: payment_info,
         hrefNumbers: hrefNumbers,
         hrefNames: hrefNames,
         hrefPrices: hrefPrices,
@@ -98,7 +152,7 @@ export const createOrder = CatchAsyncError(
 
       user?.products.push({
         productId: product?._id,
-        cardObjectId: payment_info,
+        // cardObjectId: payment_info,
         hrefNames,
         hrefNumbers,
         hrefPrices,

@@ -240,7 +240,7 @@ export const updateAccessToken = CatchAsyncError(
         { id: user._id },
         process.env.ACCESS_TOKEN as string,
         {
-          expiresIn: "5m",
+          expiresIn: "30m",
         }
       );
 
@@ -272,7 +272,46 @@ export const getUserInfo = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user?._id;
-      getUserById(userId, res);
+      const user = await userModel.findById(userId);
+      if (user) {
+        res.status(201).json({
+          success: true,
+          user,
+        });
+      } else {
+        res.status(404).json({
+          success: false,
+          message: "No User Found",
+        });
+      }
+      // getUserById(userId, res);
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+
+//! user cart products
+
+export const getUserCart = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?._id;
+
+      const user = await userModel.findById(userId);
+      if (user) {
+        console.log(`User found`);
+        res.status(201).json({
+          success: true,
+          products: user.products,
+        });
+      } else {
+        console.log(`user not found`);
+        res.status(404).json({
+          success: false,
+          message: "User Not Found",
+        });
+      }
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));
     }
@@ -474,6 +513,56 @@ export const deleteUser = CatchAsyncError(
         res.status(200).json({
           success: true,
           message: `🚀 ${user.name} Your Account Is Deleted Successfully`,
+        });
+      }
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+
+// ~ delete items from cart
+export const deleteCartItem = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { productId } = req.params; // Destructure productId correctly
+
+      const userId = req.user?._id;
+
+      const user = await userModel.findById(userId);
+
+      if (user) {
+        const products = user.products;
+
+        if (productId) {
+          const productIndex = products.findIndex((product: any) => product._id.toString() === productId); // Convert to string and find index
+
+          if (productIndex > -1) {
+            // If product is found, remove it from the array
+            products.splice(productIndex, 1);
+            await user.save(); // Save the user document after removing the product
+
+            res.status(200).json({
+              success: true,
+              message: "Product removed from cart successfully",
+              // products: products,
+            });
+          } else {
+            res.status(404).json({
+              success: false,
+              message: "Product not found in cart",
+            });
+          }
+        } else {
+          res.status(400).json({
+            success: false,
+            message: "No Product ID provided",
+          });
+        }
+      } else {
+        res.status(404).json({
+          success: false,
+          message: "User not found",
         });
       }
     } catch (error: any) {

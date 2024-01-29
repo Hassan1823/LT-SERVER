@@ -59,11 +59,14 @@ productRoute.get("/products-by-type/:type", getProductsByTypes);
 // ! product by main type
 productRoute.get("/main-type-products/:type", productsMainType);
 
-productRoute.get("/products-by-frames", getProductsByFrames);
+productRoute.get("/products-by-frames/:frames", getProductsByFrames);
 
 productRoute.get("/products-by-family", getProductsByFamily);
 
-productRoute.get("/products-by-hrefNumber", getProductsByHrefNumber);
+productRoute.get(
+  "/products-by-hrefNumber",
+  getProductsByHrefNumber
+);
 
 productRoute.get("/products-by-sub/:id", getProductsBySubCategory);
 

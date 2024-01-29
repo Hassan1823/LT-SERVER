@@ -310,7 +310,7 @@ interface ISearchFrames {
 export const getProductsByFrames = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { frames } = req.body as ISearchFrames;
+      const { frames } = req.params;
       const productFrames = frames?.trim().toUpperCase();
 
       const products = await ProductModel.find();
@@ -377,7 +377,7 @@ export const getProductsByFamily = CatchAsyncError(
   }
 );
 
-// ~ search products by hrefNumbers
+// ! search products by hrefNumbers
 
 interface ISearchHrefNames {
   href_number: any;
@@ -385,23 +385,50 @@ interface ISearchHrefNames {
 export const getProductsByHrefNumber = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { href_number } = req.body as ISearchHrefNames;
+      const { href_number } = req.body;
 
       const products = await ProductModel.find();
+      let partNumber: any = "";
+      let partName: any = "";
+      let partPrice: any = "";
+      let productId: any = "";
+      let cardId: any = "";
+      let title: any = "";
+      let car: any = "";
+      let productImage: any = "";
+      let mainTitle: any = "";
 
       if (products) {
         const resultProducts = products.filter((product) => {
           const listOfHref = product.ListOfHrefs;
+          let carType: any = product?.BreadcrumbsH1?.trim();
+          let carTypeArray: any = carType?.split(" ");
+          carType = carTypeArray[0] + " " + carTypeArray[1];
 
           const cards = listOfHref?.filter((listOfHref) => {
             const cardsList = listOfHref.cards;
 
             const hrefNumberList = cardsList?.filter((href) => {
-              const hrefNumbers = href.hrefNumbers;
+              const hrefNumbers: any = href.hrefNumbers;
+              const hrefNames: any = href.hrefNames;
+              const hrefPrices: any = href.hrefPrices;
 
               // Corrected filter function to return a boolean
               const productHrefList = hrefNumbers?.filter(
-                (item) => item === href_number.trim()
+                (item: any, index: number) => {
+                  if (item === href_number.trim()) {
+                    partNumber = item;
+                    partName = hrefNames[index];
+                    partPrice = hrefPrices[index];
+                    productId = product._id;
+                    cardId = href._id;
+                    title = href.hrefH1;
+                    car = carType;
+                    productImage = href.ImageLink;
+                    mainTitle = href.hrefH1;
+                    return item;
+                  }
+                }
               );
               if (productHrefList?.length !== 0) {
                 return productHrefList; // Return true if the item is found
@@ -419,7 +446,17 @@ export const getProductsByHrefNumber = CatchAsyncError(
         if (resultProducts.length !== 0) {
           res.status(200).json({
             success: true,
-            resultProducts,
+            resultProducts: {
+              productId: productId,
+              cardId: cardId,
+              productImage: productImage,
+              mainTitle: mainTitle,
+              mainCategory: car,
+              productName: title,
+              partNumber: partNumber,
+              partName: partName,
+              partPrice: partPrice,
+            },
           });
         } else {
           return next(new ErrorHandler(`⚠️ No Products Available`, 400));

@@ -18,7 +18,7 @@ export interface IUser extends Document {
   isVerified: boolean;
   products: Array<{
     productId: string;
-    cardObjectId: string;
+    // cardObjectId: string;
     hrefNumbers: string;
     hrefNames: string;
     hrefPrices: string;
@@ -66,7 +66,7 @@ const userSchema: Schema<IUser> = new mongoose.Schema(
     products: [
       {
         productId: String,
-        cardObjectId: String,
+        // cardObjectId: String,
         hrefNumbers: String,
         hrefNames: String,
         hrefPrices: String,
@@ -89,7 +89,7 @@ userSchema.pre<IUser>("save", async function (next) {
 // ! sign access token
 userSchema.methods.SignAccessToken = function () {
   return jwt.sign({ id: this._id }, process.env.ACCESS_TOKEN || "", {
-    expiresIn: "5m",
+    expiresIn: "20m",
   });
 };
 

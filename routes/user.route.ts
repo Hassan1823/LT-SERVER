@@ -2,8 +2,10 @@ import express from "express";
 const userRouter = express.Router();
 import {
   activateUser,
+  deleteCartItem,
   deleteUser,
   getAllUsers,
+  getUserCart,
   getUserInfo,
   loginUser,
   logoutUser,
@@ -28,6 +30,8 @@ userRouter.get("/logout", isAuthenticated, logoutUser);
 userRouter.get("/refresh", updateAccessToken);
 
 userRouter.get("/me", isAuthenticated, getUserInfo);
+
+userRouter.get("/user-cart", isAuthenticated, getUserCart);
 
 userRouter.post("/social-auth", socialAuth);
 
@@ -57,5 +61,7 @@ userRouter.delete(
   authorizeRoles("admin"),
   deleteUser
 );
+
+userRouter.delete("/delete-cart-item/:productId", isAuthenticated, deleteCartItem);
 
 export default userRouter;
