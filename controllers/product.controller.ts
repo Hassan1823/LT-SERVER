@@ -218,7 +218,7 @@ export const deleteProduct = CatchAsyncError(
 export const productsMainType = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { type } = req.params;
+      const { type, limit, prevLimit } = req.params;
       const typeTrim = (type || "").trim().toUpperCase();
       let productNames: any = [];
 
@@ -246,7 +246,8 @@ export const productsMainType = CatchAsyncError(
 
       res.status(200).json({
         success: true,
-        products: productNames,
+        products: productNames.slice(prevLimit, limit),
+        length : productNames.length
       });
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));

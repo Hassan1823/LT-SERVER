@@ -57,7 +57,7 @@ productRoute.delete(
 productRoute.get("/products-by-type/:type", getProductsByTypes);
 
 // ! product by main type
-productRoute.get("/main-type-products/:type", productsMainType);
+productRoute.get("/main-type-products/:type/:prevLimit/:limit", productsMainType);
 
 productRoute.get("/products-by-frames/:frames", getProductsByFrames);
 
