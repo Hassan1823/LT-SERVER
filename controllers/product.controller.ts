@@ -9,6 +9,7 @@ import {
   getAllProductsService,
 } from "../services/product.service";
 import ErrorHandler from "../utils/ErrorHandler";
+import * as fs from 'fs';
 // import { redis } from "../utils/redis";
 
 // ! ----------- functions
@@ -17,19 +18,32 @@ import ErrorHandler from "../utils/ErrorHandler";
 export const uploadProduct = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = req.body;
-      const thumbnail = data.thumbnail;
-      if (thumbnail) {
-        const myCloud = await cloudinary.v2.uploader.upload(thumbnail, {
-          folder: "products",
+      const filePath = "./infiniti.json"
+      const product_data = await fs.promises.readFile(filePath, 'utf8');
+      const dataArray = JSON.parse(product_data);
+      if (dataArray && dataArray.length) {
+        dataArray.forEach((product: any) => {
+          let productName = product.BreadcrumbsH1.trim().split(",");
+          let productTittle = product.BreadcrumbsH1.trim();
+          let productTitleArray = productTittle.split(" ");
+          let category = productTitleArray[0];
+          let subCategory = productTitleArray[1];
+           productName = productName[0];
+
+          product["category"]=category.toString()
+          product["subcategory"]=subCategory.toString()
+          product["product_name"]=productName.toString()
+          createProduct(product);
         });
 
-        data.thumbnail = {
-          public_id: myCloud.public_id,
-          url: myCloud.secure_url,
-        };
+      } else {
+        res.send("file not found")
       }
-      createProduct(data, res, next);
+      // const product = await ProductModel.create(data);
+      res.status(200).json({
+        success: true,
+      });
+
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));
     }
@@ -197,36 +211,32 @@ export const deleteProduct = CatchAsyncError(
 export const productsMainType = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { type, limit, prevLimit } = req.params;
-      const typeTrim = (type || "").trim().toUpperCase();
-      let productNames: any = [];
+      const { type, limit, page } = req.params  as { type?: string, limit?: string, page?: string };
 
-      console.log(`type is : `);
-      console.log(typeTrim);
-      let product: any = await ProductModel.find();
-      productNames = product;
+      let query: any = {};
+      const skip = (Number(page) - 1) * Number(limit);
 
-      if (type !== "") {
-        productNames = productNames.filter((product: any) => {
-          const productBreadcrumbsH1 = product.BreadcrumbsH1;
-          let BreadcrumbsH1 = productBreadcrumbsH1;
-          if (BreadcrumbsH1) {
-            return BreadcrumbsH1.trim().toUpperCase().startsWith(typeTrim);
-          }
-          return false;
-        });
-      } else {
-        return next(new ErrorHandler("🚀 No Type Selected", 404));
+      if (type){
+        query["category"] = type
       }
 
-      if (productNames.length === 0) {
+      const totalCount = await ProductModel.countDocuments(query);
+      let product: any = await ProductModel.find(query)
+      .limit(Number(limit))
+      .skip(skip)
+      .select("BreadcrumbsH1 Frames ImageLink Years subcategory product_name category")
+
+      if (product.length === 0) {
         return next(new ErrorHandler("🚀 No Product Found", 404));
       }
 
       res.status(200).json({
         success: true,
-        products: productNames.slice(prevLimit, limit),
-        length: productNames.length,
+        products: product,
+        limit:Number(limit),
+        page: Number(page),
+        totalPages:(totalCount/Number(limit)).toFixed()
+
       });
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));
@@ -473,59 +483,35 @@ interface Product extends Document {
 export const getProductsBySubCategory = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const subType = req.params.id;
-      const types = subType.split(" ");
-      const second_category = types[1];
-      // console.log(types);
-      // const { sub_category, type } = req.body as Product;
+      const sub_category = req.params.subCategory;
+      const {limit, page } = req.params  as { type?: string, limit?: string, page?: string };
 
-      const mainCategory = types[0].trim();
-      console.log(`Main Category : ${mainCategory}`);
-      console.log(`Sub Category : ${second_category}`);
-      let products: any = [];
-      let productNames: any = [];
+      let query: any = {};
+      const skip = (Number(page) - 1) * Number(limit);
 
-      // const isCacheExist = await redis.get(mainCategory);
-      // if (isCacheExist) {
-      //   products = JSON.parse(isCacheExist);
-      //   console.log(`🚀 Hitting Redis`);
-      // } else {
-      products = await ProductModel.find();
-
-      products = products.filter((product: Product) => {
-        let productTitle = product.BreadcrumbsH1.trim();
-        let productTitleArray = productTitle.split(" ");
-        productTitle = productTitleArray[0];
-        // console.log(productTitle);
-
-        return productTitle === mainCategory;
-      });
-      // await redis.set(mainCategory, JSON.stringify(products));
-      // }
-      productNames = products;
-      // console.log(`🚀 ${productNames.BreadcrumbsH1 }`);
-
-      if (second_category !== "") {
-        productNames = productNames.filter((product: Product) => {
-          let title = product.BreadcrumbsH1.trim();
-          let titleArray = title.split(" ");
-          let splitItem = titleArray[1];
-
-          console.log(`Trim : ${splitItem}`);
-          return splitItem.toUpperCase() === second_category.toUpperCase();
-        });
-      } else {
-        return next(new ErrorHandler("🚀 No Type Selected", 404));
+      if (sub_category){
+        query["product_name"] = { $regex: '.*' + sub_category + '.*', $options: 'i' } 
       }
 
-      if (productNames.length === 0) {
+      const totalCount = await ProductModel.countDocuments(query);
+      let product: any = await ProductModel.find(query)
+      .limit(Number(limit))
+      .skip(skip)
+      .select("BreadcrumbsH1 Frames ImageLink Years subcategory product_name category")
+
+      if (product.length === 0) {
         return next(new ErrorHandler("🚀 No Product Found", 404));
       }
 
       res.status(200).json({
         success: true,
-        productNames: productNames,
+        products: product,
+        limit:Number(limit),
+        page: Number(page),
+        totalPages:(totalCount/Number(limit)).toFixed()
+
       });
+
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));
     }

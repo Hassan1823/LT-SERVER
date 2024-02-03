@@ -23,6 +23,9 @@ interface IProduct extends Document {
   ImageLink?: string;
   Alt?: string;
   thumbnail: object;
+  category?: string;
+  subcategory?: string;
+  product_name?: string;
   price: number;
   Family?: string;
   Years?: string;
@@ -80,6 +83,9 @@ const productsSchema = new Schema<IProduct>(
     ParentTitle: String,
     ImageLink: String,
     Alt: String,
+    category: String,
+    subcategory: String,
+    product_name: String,
     thumbnail: {
       public_id: {
         type: String,

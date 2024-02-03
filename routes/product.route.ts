@@ -23,8 +23,8 @@ const productRoute = express.Router();
 
 productRoute.post(
   "/add-product",
-  isAuthenticated,
-  authorizeRoles("admin"),
+  // isAuthenticated,
+  // authorizeRoles("admin"),
   uploadProduct
 );
 
@@ -57,7 +57,7 @@ productRoute.delete(
 productRoute.get("/products-by-type/:type", getProductsByTypes);
 
 // ! product by main type
-productRoute.get("/main-type-products/:type/:prevLimit/:limit", productsMainType);
+productRoute.get("/main-type-products/:type/:limit/:page", productsMainType);
 
 productRoute.get("/products-by-frames/:frames", getProductsByFrames);
 
@@ -68,7 +68,7 @@ productRoute.get(
   getProductsByHrefNumber
 );
 
-productRoute.get("/products-by-sub/:id", getProductsBySubCategory);
+productRoute.get("/products-by-sub/:subCategory/:limit/:page", getProductsBySubCategory);
 
 productRoute.get("/product-card", getProductCard);
 
