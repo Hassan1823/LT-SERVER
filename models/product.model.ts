@@ -33,6 +33,9 @@ interface IProduct extends Document {
   TextsDiv?: string;
   ListOfHrefs?: IListOfHrefs[];
   purchased?: number;
+  category: string;
+  subcategory: string;
+  product_name: string;
 }
 
 //! ---------------   schema for the products
@@ -103,6 +106,18 @@ const productsSchema = new Schema<IProduct>(
     purchased: {
       type: Number,
       default: 0,
+    },
+    category: {
+      type: String,
+      required: true,
+    },
+    subcategory: {
+      type: String,
+      required: true,
+    },
+    product_name: {
+      type: String,
+      required: true,
     },
   },
   { timestamps: true }

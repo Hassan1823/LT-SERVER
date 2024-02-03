@@ -23,8 +23,8 @@ const productRoute = express.Router();
 
 productRoute.post(
   "/add-product",
-  isAuthenticated,
-  authorizeRoles("admin"),
+  // isAuthenticated,
+  // authorizeRoles("admin"),
   uploadProduct
 );
 

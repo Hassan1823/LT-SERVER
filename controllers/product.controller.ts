@@ -9,6 +9,7 @@ import {
   getAllProductsService,
 } from "../services/product.service";
 import ErrorHandler from "../utils/ErrorHandler";
+import * as fs from 'fs';
 // import { redis } from "../utils/redis";
 
 // ! ----------- functions
@@ -17,19 +18,30 @@ import ErrorHandler from "../utils/ErrorHandler";
 export const uploadProduct = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = req.body;
-      const thumbnail = data.thumbnail;
-      if (thumbnail) {
-        const myCloud = await cloudinary.v2.uploader.upload(thumbnail, {
-          folder: "products",
+      const filePath = "./infiniti.json"
+      const product_data = await fs.promises.readFile(filePath, 'utf8');
+      const dataArray = JSON.parse(product_data);
+      if (dataArray && dataArray.length) {
+        dataArray.forEach((product: any) => {
+          let productTittle = product.BreadcrumbsH1.trim();
+          let productTitleArray = productTittle.split(" ");
+          let category = productTitleArray[0];
+          let productName = productTitleArray[1];
+
+          product["category"]=category
+          product["subcategory"]=productName
+          product["product_name"]=productName
+          createProduct(product);
         });
 
-        data.thumbnail = {
-          public_id: myCloud.public_id,
-          url: myCloud.secure_url,
-        };
+      } else {
+        res.send("file not found")
       }
-      createProduct(data, res, next);
+      // const product = await ProductModel.create(data);
+      res.status(200).json({
+        success: true,
+      });
+
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));
     }
