@@ -9,7 +9,7 @@ import {
   getAllProductsService,
 } from "../services/product.service";
 import ErrorHandler from "../utils/ErrorHandler";
-import * as fs from 'fs';
+import * as fs from "fs";
 // import { redis } from "../utils/redis";
 
 // ! ----------- functions
@@ -18,8 +18,8 @@ import * as fs from 'fs';
 export const uploadProduct = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const filePath = "./infiniti.json"
-      const product_data = await fs.promises.readFile(filePath, 'utf8');
+      const filePath = "./toyota.json";
+      const product_data = await fs.promises.readFile(filePath, "utf8");
       const dataArray = JSON.parse(product_data);
       if (dataArray && dataArray.length) {
         dataArray.forEach((product: any) => {
@@ -28,22 +28,21 @@ export const uploadProduct = CatchAsyncError(
           let productTitleArray = productTittle.split(" ");
           let category = productTitleArray[0];
           let subCategory = productTitleArray[1];
-           productName = productName[0];
+          productName = productName[0];
 
-          product["category"]=category.toString()
-          product["subcategory"]=subCategory.toString()
-          product["product_name"]=productName.toString()
+          product["category"] = category.toString();
+          product["subcategory"] = subCategory.toString();
+          product["product_name"] = productName.toString();
           createProduct(product);
         });
-
       } else {
-        res.send("file not found")
+        res.send("file not found");
       }
       // const product = await ProductModel.create(data);
       res.status(200).json({
         success: true,
+        length: dataArray.length,
       });
-
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));
     }
@@ -114,7 +113,6 @@ export const getSingleProduct = CatchAsyncError(
 export const getAllProducts = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-    
       let products = await ProductModel.find().sort({ createdAt: -1 });
 
       // await redis.set("allProducts", JSON.stringify(products));
@@ -211,20 +209,26 @@ export const deleteProduct = CatchAsyncError(
 export const productsMainType = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { type, limit, page } = req.params  as { type?: string, limit?: string, page?: string };
+      const { type, limit, page } = req.params as {
+        type?: string;
+        limit?: string;
+        page?: string;
+      };
 
       let query: any = {};
       const skip = (Number(page) - 1) * Number(limit);
 
-      if (type){
-        query["category"] = type
+      if (type) {
+        query["category"] = type;
       }
 
-      const totalCount = await ProductModel.countDocuments(query);
+      const totalCount: number = await ProductModel.countDocuments(query);
       let product: any = await ProductModel.find(query)
-      .limit(Number(limit))
-      .skip(skip)
-      .select("BreadcrumbsH1 Frames ImageLink Years subcategory product_name category")
+        .limit(Number(limit))
+        .skip(skip)
+        .select(
+          "BreadcrumbsH1 Frames ImageLink Years subcategory product_name category"
+        );
 
       if (product.length === 0) {
         return next(new ErrorHandler("🚀 No Product Found", 404));
@@ -233,10 +237,10 @@ export const productsMainType = CatchAsyncError(
       res.status(200).json({
         success: true,
         products: product,
-        limit:Number(limit),
+        limit: Number(limit),
         page: Number(page),
-        totalPages:(totalCount/Number(limit)).toFixed()
-
+        totalPages: Math.ceil(totalCount / Number(limit)),
+        totalLength: totalCount,
       });
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));
@@ -476,28 +480,36 @@ interface Product extends Document {
   ParentTitle: string;
   _doc: any;
   BreadcrumbsH1: string;
-  // sub_category: string;
-  // type: string;
 }
 
 export const getProductsBySubCategory = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const sub_category = req.params.subCategory;
-      const {limit, page } = req.params  as { type?: string, limit?: string, page?: string };
+
+      let { limit, page } = req.params as {
+        type?: any;
+        limit?: any;
+        page?: any;
+      };
 
       let query: any = {};
       const skip = (Number(page) - 1) * Number(limit);
 
-      if (sub_category){
-        query["product_name"] = { $regex: '.*' + sub_category + '.*', $options: 'i' } 
+      if (sub_category) {
+        query["product_name"] = {
+          $regex: ".*" + sub_category + ".*",
+          $options: "i",
+        };
       }
 
       const totalCount = await ProductModel.countDocuments(query);
       let product: any = await ProductModel.find(query)
-      .limit(Number(limit))
-      .skip(skip)
-      .select("BreadcrumbsH1 Frames ImageLink Years subcategory product_name category")
+        .limit(Number(limit))
+        .skip(skip)
+        .select(
+          "BreadcrumbsH1 Frames ImageLink Years subcategory product_name category"
+        );
 
       if (product.length === 0) {
         return next(new ErrorHandler("🚀 No Product Found", 404));
@@ -506,12 +518,10 @@ export const getProductsBySubCategory = CatchAsyncError(
       res.status(200).json({
         success: true,
         products: product,
-        limit:Number(limit),
+        limit: Number(limit),
         page: Number(page),
-        totalPages:(totalCount/Number(limit)).toFixed()
-
+        totalPages: (totalCount / Number(limit)).toFixed(),
       });
-
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));
     }
