@@ -83,18 +83,7 @@ export const getSingleProduct = CatchAsyncError(
     try {
       const productId = req.params.id;
 
-      // const isCachedExist = await redis.get(productId);
-
-      // if (isCachedExist) {
-      //   const product = JSON.parse(isCachedExist);
-      //   res.status(200).json({
-      //     success: true,
-      //     product,
-      //   });
-      // } else {
       const product = await ProductModel.findById(productId);
-      // await redis.set(productId, JSON.stringify(product));
-      // await redis.del("allProducts");
 
       res.status(200).json({
         success: true,
@@ -111,17 +100,7 @@ export const getSingleProduct = CatchAsyncError(
 export const getAllProducts = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // const isCatcheExist = await redis.get("allProducts");
-
-      // if (isCatcheExist) {
-      //   const products = JSON.parse(isCatcheExist);
-      //   //   console.log(`🚀 Hitting Redis`)
-
-      //   res.status(200).json({
-      //     success: true,
-      //     products,
-      //   });
-      // } else {
+    
       let products = await ProductModel.find().sort({ createdAt: -1 });
 
       // await redis.set("allProducts", JSON.stringify(products));
