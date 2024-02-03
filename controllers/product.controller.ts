@@ -259,7 +259,7 @@ export const productsMainType = CatchAsyncError(
       res.status(200).json({
         success: true,
         products: productNames.slice(prevLimit, limit),
-        length : productNames.length
+        length: productNames.length,
       });
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));
@@ -392,90 +392,101 @@ export const getProductsByFamily = CatchAsyncError(
 
 // ! search products by hrefNumbers
 
-interface ISearchHrefNames {
-  href_number: any;
-}
 export const getProductsByHrefNumber = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { href_number } = req.body;
+      const { href_number } = req.params;
+      console.log("Parts Number is :", href_number);
 
-      const products = await ProductModel.find();
       let partNumber: any = "";
       let partName: any = "";
       let partPrice: any = "";
       let productId: any = "";
-      let cardId: any = "";
       let title: any = "";
       let car: any = "";
       let productImage: any = "";
       let mainTitle: any = "";
+      let frame: any = "";
 
-      if (products) {
-        const resultProducts = products.filter((product) => {
-          const listOfHref = product.ListOfHrefs;
-          let carType: any = product?.BreadcrumbsH1?.trim();
-          let carTypeArray: any = carType?.split(" ");
-          carType = carTypeArray[0] + " " + carTypeArray[1];
+      if (href_number !== "") {
+        const products = await ProductModel.find();
 
-          const cards = listOfHref?.filter((listOfHref) => {
-            const cardsList = listOfHref.cards;
+        if (products.length !== 0) {
+          console.log(`🚀🚀🚀🚀🚀🚀`);
+          const result = products.filter((product: any, index: number) => {
+            const breadC = product.BreadcrumbsH1.split(",")[0];
 
-            const hrefNumberList = cardsList?.filter((href) => {
-              const hrefNumbers: any = href.hrefNumbers;
-              const hrefNames: any = href.hrefNames;
-              const hrefPrices: any = href.hrefPrices;
+            // const pFrame = product.Frames.split(",")[0];
 
-              // Corrected filter function to return a boolean
-              const productHrefList = hrefNumbers?.filter(
-                (item: any, index: number) => {
-                  if (item === href_number.trim()) {
-                    partNumber = item;
-                    partName = hrefNames[index];
-                    partPrice = hrefPrices[index];
-                    productId = product._id;
-                    cardId = href._id;
-                    title = href.hrefH1;
-                    car = carType;
-                    productImage = href.ImageLink;
-                    mainTitle = href.hrefH1;
-                    return item;
-                  }
-                }
-              );
-              if (productHrefList?.length !== 0) {
-                return productHrefList; // Return true if the item is found
+            const ListOfHrefs = product.ListOfHrefs;
+
+            const cardsResult = ListOfHrefs.filter(
+              (list: any, index: number) => {
+                const card = list.cards;
+                const hrefNumbersResult = card.filter((card: any) => {
+                  const hrefNumbers = card.hrefNumbers;
+
+                  const result = hrefNumbers.find(
+                    (href: any, index: number) => {
+                      if (href === href_number) {
+                        console.log(
+                          href,
+                          "matched with ",
+                          href_number,
+                          "at index ",
+                          index
+                        );
+
+                        partNumber = href;
+                        partName = card.hrefNames[index];
+                        partPrice = card.hrefPrices[index];
+                        productId = product._id;
+                        title = card.Alt;
+                        car = product.ParentTitle
+                          ? product.ParentTitle
+                          : breadC;
+                        productImage = card.Href;
+                        mainTitle = card.hrefH1;
+                        frame = product.Frames;
+
+                        return href;
+                      }
+                    }
+                  );
+
+                  // console.log(result)
+                });
               }
+            );
+          });
+          if (partName !== "") {
+            res.status(200).json({
+              success: true,
+              product: {
+                partNumber,
+                partName,
+                partPrice,
+                productId,
+                title,
+                car,
+                productImage,
+                mainTitle,
+                frame,
+              },
             });
-            if (hrefNumberList?.length !== 0) {
-              return hrefNumberList; // Return true if the item is found
-            }
-          });
-          if (cards?.length !== 0) {
-            return cards; // Return true if the item is found
+          } else {
+            res.status(404).json({
+              success: false,
+              message: "Part Not Found",
+            });
           }
-        });
-
-        if (resultProducts.length !== 0) {
-          res.status(200).json({
-            success: true,
-            resultProducts: {
-              productId: productId,
-              cardId: cardId,
-              productImage: productImage,
-              mainTitle: mainTitle,
-              mainCategory: car,
-              productName: title,
-              partNumber: partNumber,
-              partName: partName,
-              partPrice: partPrice,
-            },
-          });
         } else {
-          return next(new ErrorHandler(`⚠️ No Products Available`, 400));
+          return next(new ErrorHandler(`⚠️No Products Available`, 404));
         }
       } else {
-        return next(new ErrorHandler(`⚠️ No Products Available`, 400));
+        return next(
+          new ErrorHandler(`⚠️ Please Enter Product Number To Search`, 404)
+        );
       }
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));

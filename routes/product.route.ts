@@ -64,7 +64,7 @@ productRoute.get("/products-by-frames/:frames", getProductsByFrames);
 productRoute.get("/products-by-family", getProductsByFamily);
 
 productRoute.get(
-  "/products-by-hrefNumber",
+  "/products-by-hrefNumber/:href_number",
   getProductsByHrefNumber
 );
 

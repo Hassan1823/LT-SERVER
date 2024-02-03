@@ -22,7 +22,7 @@ app.use(cookieParser());
 app.use(
   cors({
     // origin: process.env.ORIGIN,
-    origin:["http://localhost:3000", "https://loonia-client.vercel.app"],
+    origin:["http://localhost:3000", "https://looniatraders.com"],
     credentials: true,
   })
 );
