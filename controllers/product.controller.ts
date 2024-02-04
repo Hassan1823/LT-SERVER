@@ -18,7 +18,7 @@ import * as fs from "fs";
 export const uploadProduct = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const filePath = "./toyota.json";
+      const filePath = "./honda.json";
       const product_data = await fs.promises.readFile(filePath, "utf8");
       const dataArray = JSON.parse(product_data);
       if (dataArray && dataArray.length) {
