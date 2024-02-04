@@ -454,7 +454,7 @@ export const getProductsByHrefNumber = CatchAsyncError(
               car: {
                 $ifNull: ["$ParentTitle", "$BreadcrumbsH1.0"],
               },
-              productImage: "$ListOfHrefs.cards.Href",
+              productImage: "$ListOfHrefs.cards.ImageLink",
               mainTitle: "$ListOfHrefs.cards.hrefH1",
               frame: "$Frames",
             },
