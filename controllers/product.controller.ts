@@ -408,7 +408,7 @@ export const getProductsByHrefNumber = CatchAsyncError(
             $options: "i",
           };
         }
-        
+        const totalCount = await ProductModel.countDocuments(query);
         const result = await ProductModel.aggregate([
           {
             $unwind: "$ListOfHrefs",
@@ -471,7 +471,10 @@ export const getProductsByHrefNumber = CatchAsyncError(
         if (product && product.length) {
           res.status(200).json({
             success: true,
-            product: product
+            product: product,
+            limit: Number(limit),
+            page: Number(page),
+            totalPages: Math.ceil(totalCount / Number(limit)),
           });
         } else {
           res.status(404).json({
