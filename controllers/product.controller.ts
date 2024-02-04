@@ -403,7 +403,10 @@ export const getProductsByHrefNumber = CatchAsyncError(
         const skip = (Number(page) - 1) * Number(limit);
 
         if (href_number) {
-          query["ListOfHrefs.cards.hrefNumbers"] = href_number
+          query["ListOfHrefs.cards.hrefNumbers"] = {
+            $regex: ".*" + href_number + ".*",
+            $options: "i",
+          };
         }
         
         const result = await ProductModel.aggregate([
