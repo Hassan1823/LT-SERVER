@@ -215,7 +215,7 @@ export const productsMainType = CatchAsyncError(
         page?: any;
       };
 
-      limit = Number(limit) || 10 ;
+      limit = Number(limit) || 12 ;
       page= Number(page) || 1
 
       let query: any = {};
