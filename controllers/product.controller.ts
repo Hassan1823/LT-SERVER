@@ -405,6 +405,41 @@ export const getProductsByHrefNumber = CatchAsyncError(
         if (href_number) {
           query["ListOfHrefs.cards.hrefNumbers"] = href_number
         }
+        // const result = await ProductModel.aggregate([
+        //   {
+        //     $unwind: "$ListOfHrefs",
+        //   },
+        //   {
+        //     $unwind: "$ListOfHrefs.cards",
+        //   },
+        //   {
+        //     $unwind: "$ListOfHrefs.cards.hrefNumbers",
+        //   },
+        //   {
+        //     $match: query
+        //   },
+        //   {
+        //     $project: {
+        //       partNumber: "$ListOfHrefs.cards.hrefNumbers",
+        //       partName: "$ListOfHrefs.cards.hrefNames",
+        //       partPrice: "$ListOfHrefs.cards.hrefPrices",
+        //       productId: "$_id",
+        //       title: "$ListOfHrefs.cards.Alt",
+        //       car: {
+        //         $ifNull: ["$ParentTitle", "$BreadcrumbsH1.0"],
+        //       },
+        //       productImage: "$ListOfHrefs.cards.Href",
+        //       mainTitle: "$ListOfHrefs.cards.hrefH1",
+        //       frame: "$Frames",
+        //     },
+        //   },
+        //   {
+        //     $skip: skip
+        //   },
+        //   {
+        //     $limit: limit,
+        //   },
+        // ]);
         const result = await ProductModel.aggregate([
           {
             $unwind: "$ListOfHrefs",
@@ -416,13 +451,35 @@ export const getProductsByHrefNumber = CatchAsyncError(
             $unwind: "$ListOfHrefs.cards.hrefNumbers",
           },
           {
-            $match: query
+            $match: query,
           },
           {
             $project: {
               partNumber: "$ListOfHrefs.cards.hrefNumbers",
-              partName: "$ListOfHrefs.cards.hrefNames",
-              partPrice: "$ListOfHrefs.cards.hrefPrices",
+              partName: {
+                $let: {
+                  vars: {
+                    index: {
+                      $indexOfArray: [[href_number], "$ListOfHrefs.cards.hrefNumbers"]
+                    }
+                  },
+                  in: {
+                    $arrayElemAt: ["$ListOfHrefs.cards.hrefNames", "$$index"]
+                  }
+                }
+              },
+              partPrice: {
+                $let: {
+                  vars: {
+                    index: {
+                      $indexOfArray: [[href_number], "$ListOfHrefs.cards.hrefNumbers"]
+                    }
+                  },
+                  in: {
+                    $arrayElemAt: ["$ListOfHrefs.cards.hrefPrices", "$$index"]
+                  }
+                }
+              },
               productId: "$_id",
               title: "$ListOfHrefs.cards.Alt",
               car: {
@@ -434,13 +491,12 @@ export const getProductsByHrefNumber = CatchAsyncError(
             },
           },
           {
-            $skip: skip
+            $skip: skip,
           },
           {
             $limit: limit,
           },
         ]);
-
         let product: any = result
 
         if (product && product.length) {
