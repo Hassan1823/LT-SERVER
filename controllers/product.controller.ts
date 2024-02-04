@@ -209,11 +209,14 @@ export const deleteProduct = CatchAsyncError(
 export const productsMainType = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { type, limit, page } = req.params as {
-        type?: string;
-        limit?: string;
-        page?: string;
+      let { type, limit, page } = req.params as {
+        type?: any;
+        limit?: any;
+        page?: any;
       };
+
+      limit = Number(limit) || 10 ;
+      page= Number(page) || 1
 
       let query: any = {};
       const skip = (Number(page) - 1) * Number(limit);
@@ -305,33 +308,43 @@ export const getProductsByFrames = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { frames } = req.params;
-      const productFrames = frames?.trim().toUpperCase();
+      let { limit, page } = req.params as {
+        type?: any;
+        limit?: any;
+        page?: any;
+      };
+      limit = Number(limit) || 10 ;
+      page= Number(page) || 1
 
-      const products = await ProductModel.find();
+      let query: any = {};
+      const skip = (Number(page) - 1) * Number(limit);
 
-      if (products) {
-        const resultProduct = products.filter((product) => {
-          const productFrame = product.Frames?.trim();
-          const splitFrame = productFrame?.split(",");
-          // console.log(`Split Frames : ${splitFrame}`);
-          const result = splitFrame?.find((item) => {
-            return item.trim() === productFrames;
-            // console.log(`Item is : ${item}`);
-          });
-
-          // console.log(`Result : ${result}`);
-          return result;
-        });
-
-        if (resultProduct.length !== 0) {
-          res.status(200).json({
-            success: true,
-            resultProduct,
-          });
-        } else {
-          return next(new ErrorHandler(`⚠️ No Match Found`, 404));
-        }
+      if (frames) {
+        query["Frames"] = {
+          $regex: ".*" + frames + ".*",
+          $options: "i",
+        };
       }
+
+      const totalCount = await ProductModel.countDocuments(query);
+      let product: any = await ProductModel.find(query)
+        .limit(Number(limit))
+        .skip(skip)
+        .select(
+          "BreadcrumbsH1 Frames ImageLink Years subcategory product_name category"
+        );
+
+      if (product.length === 0) {
+        return next(new ErrorHandler("🚀 No Product Found", 404));
+      }
+
+      res.status(200).json({
+        success: true,
+        products: product,
+        limit: Number(limit),
+        page: Number(page),
+        totalPages: Math.ceil(totalCount / Number(limit)),
+      });
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));
     }
@@ -377,92 +390,97 @@ export const getProductsByHrefNumber = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { href_number } = req.params;
-      console.log("Parts Number is :", href_number);
-
-      let partNumber: any = "";
-      let partName: any = "";
-      let partPrice: any = "";
-      let productId: any = "";
-      let title: any = "";
-      let car: any = "";
-      let productImage: any = "";
-      let mainTitle: any = "";
-      let frame: any = "";
 
       if (href_number !== "") {
-        const products = await ProductModel.find();
+        let { limit, page } = req.params as {
+          limit?: any;
+          page?: any;
+        };
 
-        if (products.length !== 0) {
-          console.log(`🚀🚀🚀🚀🚀🚀`);
-          const result = products.filter((product: any, index: number) => {
-            const breadC = product.BreadcrumbsH1.split(",")[0];
+        limit = Number(limit) || 10
+        page = Number(page) || 1
+        let query: any = {};
+        const skip = (Number(page) - 1) * Number(limit);
 
-            // const pFrame = product.Frames.split(",")[0];
-
-            const ListOfHrefs = product.ListOfHrefs;
-
-            const cardsResult = ListOfHrefs.filter(
-              (list: any, index: number) => {
-                const card = list.cards;
-                const hrefNumbersResult = card.filter((card: any) => {
-                  const hrefNumbers = card.hrefNumbers;
-
-                  const result = hrefNumbers.find(
-                    (href: any, index: number) => {
-                      if (href === href_number) {
-                        console.log(
-                          href,
-                          "matched with ",
-                          href_number,
-                          "at index ",
-                          index
-                        );
-
-                        partNumber = href;
-                        partName = card.hrefNames[index];
-                        partPrice = card.hrefPrices[index];
-                        productId = product._id;
-                        title = card.Alt;
-                        car = product.ParentTitle
-                          ? product.ParentTitle
-                          : breadC;
-                        productImage = card.Href;
-                        mainTitle = card.hrefH1;
-                        frame = product.Frames;
-
-                        return href;
-                      }
+        if (href_number) {
+          query["ListOfHrefs.cards.hrefNumbers"] = {
+            $regex: ".*" + href_number + ".*",
+            $options: "i",
+          };
+        }
+        const totalCount = await ProductModel.countDocuments(query);
+        const result = await ProductModel.aggregate([
+          {
+            $unwind: "$ListOfHrefs",
+          },
+          {
+            $unwind: "$ListOfHrefs.cards",
+          },
+          {
+            $unwind: "$ListOfHrefs.cards.hrefNumbers",
+          },
+          {
+            $match: query,
+          },
+          {
+            $project: {
+              partNumber: "$ListOfHrefs.cards.hrefNumbers",
+              partName: {
+                $let: {
+                  vars: {
+                    index: {
+                      $indexOfArray: [[href_number], "$ListOfHrefs.cards.hrefNumbers"]
                     }
-                  );
-
-                  // console.log(result)
-                });
-              }
-            );
-          });
-          if (partName !== "") {
-            res.status(200).json({
-              success: true,
-              product: {
-                partNumber,
-                partName,
-                partPrice,
-                productId,
-                title,
-                car,
-                productImage,
-                mainTitle,
-                frame,
+                  },
+                  in: {
+                    $arrayElemAt: ["$ListOfHrefs.cards.hrefNames", "$$index"]
+                  }
+                }
               },
-            });
-          } else {
-            res.status(404).json({
-              success: false,
-              message: "Part Not Found",
-            });
-          }
+              partPrice: {
+                $let: {
+                  vars: {
+                    index: {
+                      $indexOfArray: [[href_number], "$ListOfHrefs.cards.hrefNumbers"]
+                    }
+                  },
+                  in: {
+                    $arrayElemAt: ["$ListOfHrefs.cards.hrefPrices", "$$index"]
+                  }
+                }
+              },
+              productId: "$_id",
+              title: "$ListOfHrefs.cards.Alt",
+              car: {
+                $ifNull: ["$ParentTitle", "$BreadcrumbsH1.0"],
+              },
+              productImage: "$ListOfHrefs.cards.Href",
+              mainTitle: "$ListOfHrefs.cards.hrefH1",
+              frame: "$Frames",
+            },
+          },
+          {
+            $skip: skip,
+          },
+          {
+            $limit: limit,
+          },
+        ]);
+        let product: any = result
+
+        if (product && product.length) {
+          res.status(200).json({
+            success: true,
+            product: product,
+            limit: Number(limit),
+            page: Number(page),
+            totalPages: Math.ceil(totalCount / Number(limit)),
+          });
         } else {
-          return next(new ErrorHandler(`⚠️No Products Available`, 404));
+          res.status(404).json({
+            success: false,
+            message: "Part Not Found",
+          });
         }
       } else {
         return next(
@@ -492,6 +510,8 @@ export const getProductsBySubCategory = CatchAsyncError(
         limit?: any;
         page?: any;
       };
+      limit = Number(limit) || 10 ;
+      page= Number(page) || 1
 
       let query: any = {};
       const skip = (Number(page) - 1) * Number(limit);
@@ -520,7 +540,7 @@ export const getProductsBySubCategory = CatchAsyncError(
         products: product,
         limit: Number(limit),
         page: Number(page),
-        totalPages: (totalCount / Number(limit)).toFixed(),
+        totalPages: Math.ceil(totalCount / Number(limit)),
       });
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));

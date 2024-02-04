@@ -57,18 +57,23 @@ productRoute.delete(
 productRoute.get("/products-by-type/:type", getProductsByTypes);
 
 // ! product by main type
-productRoute.get("/main-type-products/:type/:limit/:page", productsMainType);
+productRoute.get("/main-type-products/:type/:limit?/:page?", productsMainType);
 
+// <<<<<<< HEAD
+// =======
+productRoute.get("/products-by-frames/:frames/:limit?/:page?", getProductsByFrames);
+
+// >>>>>>> 0c4ee3914553b6c8d082837b885cdf9a061b58b6
 productRoute.get("/products-by-family", getProductsByFamily);
 
 productRoute.get("/products-by-frames/:frames", getProductsByFrames);
 
 productRoute.get(
-  "/products-by-hrefNumber/:href_number",
+  "/products-by-hrefNumber/:href_number/:limit?/:page?",
   getProductsByHrefNumber
 );
 
-productRoute.get("/products-by-sub/:subCategory/:limit/:page", getProductsBySubCategory);
+productRoute.get("/products-by-sub/:subCategory/:limit?/:page?", getProductsBySubCategory);
 
 productRoute.get("/product-card", getProductCard);
 
