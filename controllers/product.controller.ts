@@ -405,41 +405,7 @@ export const getProductsByHrefNumber = CatchAsyncError(
         if (href_number) {
           query["ListOfHrefs.cards.hrefNumbers"] = href_number
         }
-        // const result = await ProductModel.aggregate([
-        //   {
-        //     $unwind: "$ListOfHrefs",
-        //   },
-        //   {
-        //     $unwind: "$ListOfHrefs.cards",
-        //   },
-        //   {
-        //     $unwind: "$ListOfHrefs.cards.hrefNumbers",
-        //   },
-        //   {
-        //     $match: query
-        //   },
-        //   {
-        //     $project: {
-        //       partNumber: "$ListOfHrefs.cards.hrefNumbers",
-        //       partName: "$ListOfHrefs.cards.hrefNames",
-        //       partPrice: "$ListOfHrefs.cards.hrefPrices",
-        //       productId: "$_id",
-        //       title: "$ListOfHrefs.cards.Alt",
-        //       car: {
-        //         $ifNull: ["$ParentTitle", "$BreadcrumbsH1.0"],
-        //       },
-        //       productImage: "$ListOfHrefs.cards.Href",
-        //       mainTitle: "$ListOfHrefs.cards.hrefH1",
-        //       frame: "$Frames",
-        //     },
-        //   },
-        //   {
-        //     $skip: skip
-        //   },
-        //   {
-        //     $limit: limit,
-        //   },
-        // ]);
+        
         const result = await ProductModel.aggregate([
           {
             $unwind: "$ListOfHrefs",
