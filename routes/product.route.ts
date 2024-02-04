@@ -59,9 +59,9 @@ productRoute.get("/products-by-type/:type", getProductsByTypes);
 // ! product by main type
 productRoute.get("/main-type-products/:type/:limit/:page", productsMainType);
 
-productRoute.get("/products-by-frames/:frames", getProductsByFrames);
-
 productRoute.get("/products-by-family", getProductsByFamily);
+
+productRoute.get("/products-by-frames/:frames", getProductsByFrames);
 
 productRoute.get(
   "/products-by-hrefNumber/:href_number",
