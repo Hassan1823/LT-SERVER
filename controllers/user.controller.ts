@@ -14,7 +14,7 @@ import {
   refreshTokenOptions,
   sendToken,
 } from "../utils/jwt";
-import { redis } from "../utils/redis";
+// import { redis } from "../utils/redis";
 import {
   getAllUserService,
   getUserById,
@@ -199,7 +199,7 @@ export const logoutUser = CatchAsyncError(
       res.cookie("refresh_token", "", { maxAge: 1 });
       const userId = req.user?._id || "";
       console.log(`User ID: ${userId}`);
-      redis.del(userId);
+      // redis.del(userId);
 
       res.status(200).json({
         success: true,
@@ -229,12 +229,16 @@ export const updateAccessToken = CatchAsyncError(
         return next(new ErrorHandler(message, 400));
       }
 
-      const session = await redis.get(decoded.id as string);
-      if (!session) {
+      // const session = await redis.get(decoded.id as string);
+      // if (!session) {
+      //   return next(new ErrorHandler(message, 400));
+      // }
+
+      // const user = JSON.parse(session);
+      const user = await userModel.findById(decoded.id);
+      if (!user) {
         return next(new ErrorHandler(message, 400));
       }
-
-      const user = JSON.parse(session);
 
       const accessToken = jwt.sign(
         { id: user._id },
@@ -366,7 +370,7 @@ export const updateUserInfo = CatchAsyncError(
       }
 
       await user?.save();
-      await redis.set(userId, JSON.stringify(user));
+      // await redis.set(userId, JSON.stringify(user));
 
       res.status(201).json({
         success: true,
@@ -410,7 +414,7 @@ export const updatePassword = CatchAsyncError(
 
       await user.save();
 
-      await redis.set(req.user?._id, JSON.stringify(user));
+      // await redis.set(req.user?._id, JSON.stringify(user));
 
       res.status(200).json({
         success: true,
@@ -458,7 +462,7 @@ export const updateProfilePicture = CatchAsyncError(
         }
       }
       await user?.save();
-      await redis.set(userId, JSON.stringify(user));
+      // await redis.set(userId, JSON.stringify(user));
 
       res.status(200).json({
         success: true,
@@ -508,7 +512,7 @@ export const deleteUser = CatchAsyncError(
         await user.deleteOne({ id });
 
         // ! delete user from redis also
-        await redis.del(id);
+        // await redis.del(id);
 
         res.status(200).json({
           success: true,
@@ -535,7 +539,9 @@ export const deleteCartItem = CatchAsyncError(
         const products = user.products;
 
         if (productId) {
-          const productIndex = products.findIndex((product: any) => product._id.toString() === productId); // Convert to string and find index
+          const productIndex = products.findIndex(
+            (product: any) => product._id.toString() === productId
+          ); // Convert to string and find index
 
           if (productIndex > -1) {
             // If product is found, remove it from the array

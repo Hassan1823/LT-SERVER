@@ -2,7 +2,8 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
 import { CatchAsyncError } from "./catchAsyncErrors";
 import ErrorHandler from "../utils/ErrorHandler";
-import { redis } from "../utils/redis";
+// import { redis } from "../utils/redis";
+import userModel from "../models/user.model";
 
 // ! for authenticated user
 export const isAuthenticated = CatchAsyncError(
@@ -22,12 +23,13 @@ export const isAuthenticated = CatchAsyncError(
       return next(new ErrorHandler(`🥲 Access Token Is Not Valid`, 400));
     }
 
-    const user = await redis.get(decoded.id);
+    // const user = await redis.get(decoded.id);
+    const user = await userModel.findById(decoded.id);
     if (!user) {
       return next(new ErrorHandler(`🥲 User Not Found`, 400));
     }
 
-    req.user = JSON.parse(user);
+    // req.user = JSON.parse(user);
     next();
   }
 );
