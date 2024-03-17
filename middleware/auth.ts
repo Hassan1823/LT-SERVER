@@ -29,7 +29,7 @@ export const isAuthenticated = CatchAsyncError(
       return next(new ErrorHandler(`🥲 User Not Found`, 400));
     }
 
-    // req.user = JSON.parse(user);
+    req.user = user;
     next();
   }
 );
